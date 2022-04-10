@@ -23,6 +23,18 @@ def separate_income_and_expences(data: list[str, ]) -> tuple[list[str, ], list[s
     return expences, incomes
 
 
+def change_category_name(data: Iterable, old_name: str, new_name: str) -> Iterable:
+    for row in data:
+        if row[9] == old_name: row[9] = new_name
+    return data
+
+
+def set_d10n_as_category_name(data: Iterable, description: str, category: str) -> Iterable:
+    for row in data:
+        if row[9] == category and row[11] == description: row[9] = description
+    return data
+
+
 def get_all_categories(data: Iterable) -> list[str, ]:
     categories = [x[9] for x in data]
     return set(categories)
@@ -53,14 +65,15 @@ def create_piechart(data: dict[str: float | int]) -> None:
     """
         data.keys() are labels, data.values() are sizes. Creates chart 'in place'
     """
-    data = {k: v for k, v in sorted(data.items(), key=lambda item: item[1], reverse=True)}
+    data = {k: round(v, 1) for k, v in sorted(data.items(), key=lambda item: item[1], reverse=True)}
     fig1, ax = plt.subplots()
     total = sum(data.values())
     patches, texts = ax.pie(data.values(),
            wedgeprops={'linewidth': 3.0, 'edgecolor': 'white'},
            startangle=90)
     labels = [f'{k} - {v} ({round(v / total * 100)}%)' for k, v in data.items()]
-    ax.legend(patches, labels, bbox_to_anchor=(1.5, 1))
+    ax.legend(patches, labels)
+    plt.title(f'Total - {total}')
 
     plt.show()
 
