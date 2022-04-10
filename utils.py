@@ -61,22 +61,14 @@ def unite_categories(categories: dict[str: [str, ]], data: dict[str: float]) -> 
     return data
 
 
-def create_piechart(data: dict[str: float | int]) -> None:
+def create_piechart_data(data: dict[str: float | int]) -> tuple[dict, float, list]:
     """
         data.keys() are labels, data.values() are sizes. Creates chart 'in place'
     """
     data = {k: round(v, 1) for k, v in sorted(data.items(), key=lambda item: item[1], reverse=True)}
-    fig1, ax = plt.subplots()
     total = sum(data.values())
-    patches, texts = ax.pie(data.values(),
-           wedgeprops={'linewidth': 3.0, 'edgecolor': 'white'},
-           startangle=90)
     labels = [f'{k} - {v} ({round(v / total * 100)}%)' for k, v in data.items()]
-    ax.legend(patches, labels)
-    plt.title(f'Total - {total}')
-
-    plt.show()
-
+    return data, total, labels
 
 def create_plot(data: dict[str: list[float | int, ]]) -> None:
     """
