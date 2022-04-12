@@ -4,6 +4,8 @@ from matplotlib import pyplot as plt
 from json import dump, load
 from datetime import datetime
 
+DATETIME_FORMAT = '%d.%m.%Y %H:%M:%S'
+
 
 def open_csv(filename: str) -> list[str, ]:
     with open(filename) as csvfile:
@@ -11,10 +13,16 @@ def open_csv(filename: str) -> list[str, ]:
     return spamreader
 
 
-def separate_income_and_expences(data: list[str, ]) -> tuple[list[str, ], list[str, ]]:
+def separate_income_and_expences(data: list[str, ] | dict, do_json=True) -> tuple[list[str, ], list[str, ]]:
     """
         data from csv reader. Returns (expences, incomes)
     """
+    if do_json:
+        expences = [x for x in data if float(x['Сумма операции'].replace(',', '.')) < 0]
+        incomes = [x for x in data if float(x['Сумма операции'].replace(',', '.')) > 0]
+
+        return expences, incomes
+
     try:  # TODO fix this mess
         expences = [x for x in data if float(x[4].replace(',', '.')) < 0]
         incomes = [x for x in data if float(x[4].replace(',', '.')) > 0]
@@ -73,14 +81,31 @@ def create_piechart_data(data: dict[str: float | int]) -> tuple[dict, float, lis
     return data, total, labels
 
 
-def create_plot(data: dict[str: list[float | int, ]]) -> None:
+def get_x_y_values(data: dict) -> dict[str: list[list, list]]:
+    plot_data = {}
+    for t9n in data:
+        total = abs(float(t9n['Сумма операции'].replace(',', '.')))
+        try:
+            category = plot_data[t9n['Категория']]
+        except KeyError:
+            plot_data[t9n['Категория']] = [[], []]
+            category = plot_data[t9n['Категория']]
+
+        category[0].append(datetime.strptime(t9n['Дата операции'], DATETIME_FORMAT))
+        category[1].append(total)
+    
+    return plot_data
+
+
+def create_plot(data: dict[str: list[list, list]]) -> None:
     """
         data.keys() are labels, data.values() are datasets. Creates plot 'in place'
     """
-    fig1, ax1 = plt.subplots()
-    for label, numbers in data.items():
-        ax1.plot(numbers, label=label)
+    for k, v in data.items():
+        plt.plot(v[0], v[1], label=k)
 
+    plt.grid()
+    plt.legend()
     plt.show()
 
 
@@ -96,22 +121,26 @@ def store_data(data: Iterable) -> None:
 
 
 def load_data(start_date: str = None, end_date: str = None):
-    datetime_format = '%d.%m.%Y %H:%M:%S'
+    """
+        Datetime format is %d.%m.%Y %H:%M:%S
+    """
     with open('db.json', 'r', encoding='utf-8') as f:
         data = load(f)
 
     if start_date and end_date:
-        start_date = datetime.strptime(start_date, datetime_format)
-        end_date = datetime.strptime(end_date, datetime_format)
+        start_date = datetime.strptime(start_date, DATETIME_FORMAT)
+        end_date = datetime.strptime(end_date, DATETIME_FORMAT)
         result = []
 
         for transaction in data:
-            operation_date = datetime.strptime(transaction['Дата операции'], datetime_format)
+            operation_date = datetime.strptime(transaction['Дата операции'], DATETIME_FORMAT)
             if end_date >= operation_date >= start_date:
                 result.append(transaction)
         return result
 
     elif not (start_date or end_date):
+        for transaction in data:
+            transaction['Дата операции'] = datetime.strptime(transaction['Дата операции'], DATETIME_FORMAT)
         return data
 
     else:

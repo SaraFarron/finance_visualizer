@@ -14,7 +14,6 @@ categories - 'Финан. услуги', 'Связь, телеком', 'Крас
 
 ### Current tasks
 
-+ make data storage (json file? sqlite?)
 + make data processing for plots (with dates on x axis)
 + make plots
 + add plots to dashboard

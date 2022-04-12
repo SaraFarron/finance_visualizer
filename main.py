@@ -35,4 +35,7 @@ def plots(expence: Iterable, income: Iterable):
 
 if __name__ == '__main__':
     file_data = open_csv(FILE_NAME)
-    load_data('07.03.2022 11:02:07', '18.03.2022 05:59:23')
+    data = load_data('07.03.2022 11:02:07', '18.03.2022 05:59:23')
+    expences, incomes = separate_income_and_expences(data)
+    plot = get_x_y_values(expences)
+    create_plot(plot)
