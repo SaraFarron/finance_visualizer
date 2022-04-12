@@ -1,6 +1,8 @@
 from csv import reader
 from typing import Iterable
 from matplotlib import pyplot as plt
+from json import dump, load
+from datetime import datetime
 
 
 def open_csv(filename: str) -> list[str, ]:
@@ -70,6 +72,7 @@ def create_piechart_data(data: dict[str: float | int]) -> tuple[dict, float, lis
     labels = [f'{k} - {v} ({round(v / total * 100)}%)' for k, v in data.items()]
     return data, total, labels
 
+
 def create_plot(data: dict[str: list[float | int, ]]) -> None:
     """
         data.keys() are labels, data.values() are datasets. Creates plot 'in place'
@@ -79,3 +82,37 @@ def create_plot(data: dict[str: list[float | int, ]]) -> None:
         ax1.plot(numbers, label=label)
 
     plt.show()
+
+
+def store_data(data: Iterable) -> None:
+    columns = [x for x in data[0]]
+    jsonable_data = []
+    for row in data[1:]:
+        transaction = {k: v for k, v in zip(columns, row)}
+        jsonable_data.append(transaction)
+
+    with open('db.json', 'a', encoding='utf-8') as f:
+        dump(jsonable_data, f, ensure_ascii=False,)
+
+
+def load_data(start_date: str = None, end_date: str = None):
+    datetime_format = '%d.%m.%Y %H:%M:%S'
+    with open('db.json', 'r', encoding='utf-8') as f:
+        data = load(f)
+
+    if start_date and end_date:
+        start_date = datetime.strptime(start_date, datetime_format)
+        end_date = datetime.strptime(end_date, datetime_format)
+        result = []
+
+        for transaction in data:
+            operation_date = datetime.strptime(transaction['Дата операции'], datetime_format)
+            if end_date >= operation_date >= start_date:
+                result.append(transaction)
+        return result
+
+    elif not (start_date or end_date):
+        return data
+
+    else:
+        raise Exception('You need to provide both dates')

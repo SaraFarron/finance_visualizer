@@ -35,5 +35,4 @@ def plots(expence: Iterable, income: Iterable):
 
 if __name__ == '__main__':
     file_data = open_csv(FILE_NAME)
-    expence, income = separate_income_and_expences(file_data)
-    piecharts(expence, income)
+    load_data('07.03.2022 11:02:07', '18.03.2022 05:59:23')
