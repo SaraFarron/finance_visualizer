@@ -14,7 +14,6 @@ categories - 'Финан. услуги', 'Связь, телеком', 'Крас
 
 ### Current tasks
 
-+ make data processing for plots (with dates on x axis)
 + make plots
 + add plots to dashboard
 + create a convinient way to use dashboard (browser? vscode interface?)
