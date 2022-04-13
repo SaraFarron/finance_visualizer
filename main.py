@@ -1,6 +1,6 @@
 from utils import *
 
-FILE_NAME = 'operations Thu Mar 03 07_42_36 MSK 2022-Thu Mar 31 13_01_32 MSK 2022.csv'
+FILE_NAME = 'operations Tue Dec 12 00_00_00 MSK 2017-Wed Apr 13 10_04_32 MSK 2022.csv'
 
 
 def piecharts(expence: Iterable, income: Iterable):
@@ -34,8 +34,7 @@ def plots(expence: Iterable, income: Iterable):
 
 
 if __name__ == '__main__':
-    file_data = open_csv(FILE_NAME)
-    data = load_data('07.03.2022 11:02:07', '18.03.2022 05:59:23')
+    data = load_data(start_date='20.03.2020 00:00:00', end_date='14.04.2022 00:00:00')
     expences, incomes = separate_income_and_expences(data)
     plot = get_x_y_values(expences)
-    create_plot(plot)
+    create_stem(plot)

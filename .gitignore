@@ -1,4 +1,4 @@
 *.csv
 finvisenv
 db.json
-__pycache__
+__pycache__/
