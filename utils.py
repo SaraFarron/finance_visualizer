@@ -91,16 +91,27 @@ def get_x_y_values(data: dict) -> dict[str: list[list, list]]:
 def group_data_per_month(data: dict[str: list[list, list]]) -> dict[str: list[list, list]]:
 
     # Creates a list of days in each month in time period
-    start, end = data.items()[0][0], data.items()[-1][0]
-    days_in_months = []
+    days_in_months, youngest, oldest = [], [], []
+    for value in data.values():
+        youngest.append(datetime.strptime(value[0][-1], DATETIME_FORMAT))
+        oldest.append(datetime.strptime(value[0][0], DATETIME_FORMAT))
+    start, end = min(oldest), max(youngest)
     for v, g in groupby(((start + timedelta(days=i)).month for i in range(1, (end - start).days + 1))):
         days_in_months.append(sum(1 for _ in g))
 
-    result = {}  # TODO
+
+    # Unites transactions per months by summing everything, that happens within a month timeframe
+    result = {}
     for k, v in data.items():
-        grouped_pair = []
-        for pair in v:
-            
+        shift = 0
+        summed_pairs = [[], []]
+        for days in days_in_months:
+            summed_pairs[0].append(v[shift + days])  # TODO list index out of range
+            summed_pairs[1].append(sum(v[shift:days]))
+            shift += days
+        result[k] = summed_pairs
+    
+    return result
 
 
 def create_plot(data: dict[str: list[list, list]]) -> None:

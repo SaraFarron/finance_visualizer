@@ -17,3 +17,9 @@ categories - 'Финан. услуги', 'Связь, телеком', 'Крас
 + make plots
 + add plots to dashboard
 + create a convinient way to use dashboard (browser? vscode interface?)
+
+### Later improvements
+ 
+ + itertools.groupby()
+ + async?
+ 

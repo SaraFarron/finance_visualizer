@@ -37,4 +37,5 @@ if __name__ == '__main__':
     data = load_data(start_date='20.03.2020 00:00:00', end_date='14.04.2022 00:00:00')
     expences, incomes = separate_income_and_expences(data)
     plot = get_x_y_values(expences)
+    plot = group_data_per_month(plot)
     create_stem(plot)
