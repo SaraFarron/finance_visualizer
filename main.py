@@ -34,10 +34,10 @@ def plots(expence: Iterable, income: Iterable):
 
 
 if __name__ == '__main__':
-    data = load_data()
+    data = load_data(start_date='01.04.2021 11:02:07', end_date='20.04.2022 05:59:23')
     expences, incomes = separate_income_and_expenses(data)
     plot = get_x_y_values(expences)
     plot = delete_category(plot, 'Переводы/иб')
     plot = delete_category(plot, '')
-    plot = group_data_per_month(plot)
-    create_stem(plot)
+    plot, dates = group_data_per_month(plot)
+    create_stem(plot, dates)
