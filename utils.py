@@ -115,7 +115,7 @@ def group_data_per_month(data: dict[str: list[list, list]]) -> dict[str: list[li
         start = start + timedelta(days=days)
 
     # Unites transactions per months by summing everything, that happens within a month timeframe
-    result = {}  # TODO test this (and better optimize somehow)
+    result = {}
     for k, v in data.items():
         res_pairs = [[], []]
         for st, e in month_periods:  # st -start, e - end
@@ -125,6 +125,44 @@ def group_data_per_month(data: dict[str: list[list, list]]) -> dict[str: list[li
                     summed_pairs[0].append(d)
                     summed_pairs[1].append(su)
             if not summed_pairs[0]:
+                continue
+            res_pairs[0].append(summed_pairs[0][-1])
+            res_pairs[1].append(sum(summed_pairs[1]))
+        result[k] = res_pairs
+
+    return result
+
+
+def group_data_per_months(data: dict[str: list[list, list]]) -> dict[str: list[list, list]]:
+    # Creates time periods [(start_of_month, end_of_month), ]
+    days_in_months, youngest, oldest = [], [], []
+    month_periods = []
+    for value in data.values():
+        youngest.append(value[0][-1])
+        oldest.append(value[0][0])
+    start, end = min(oldest), max(youngest)
+    shift = start
+    for v, g in groupby(((start + timedelta(days=i)).month for i in range(1, (end - start).days + 1))):
+        days = sum(1 for _ in g)
+        month_periods.append((
+            shift,
+            shift + timedelta(days=days)
+        ))
+        shift = shift + timedelta(days=days)
+
+    # Unites transactions per months by summing everything, that happens within a month timeframe
+    result = {}
+    for k, v in data.items():
+        res_pairs = [[], []]
+        for st, e in month_periods:  # st -start, e - end
+            summed_pairs = [[], []]
+            for d, su in zip(v[0], v[1]):  # d - date, su - sum
+                if st < d <= e:
+                    summed_pairs[0].append(d)
+                    summed_pairs[1].append(su)
+            if not summed_pairs[0]:
+                summed_pairs[0].append(d)  # TODO fix this
+                summed_pairs[1].append(0)
                 continue
             res_pairs[0].append(summed_pairs[0][-1])
             res_pairs[1].append(sum(summed_pairs[1]))
