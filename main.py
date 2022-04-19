@@ -35,7 +35,7 @@ def plots(expence: Iterable, income: Iterable):
 
 if __name__ == '__main__':
     data = load_data()
-    expences, incomes = separate_income_and_expences(data)
+    expences, incomes = separate_income_and_expenses(data)
     plot = get_x_y_values(expences)
     plot = delete_category(plot, 'Переводы/иб')
     plot = delete_category(plot, '')

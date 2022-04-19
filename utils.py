@@ -1,9 +1,8 @@
 from csv import reader
-import json
 from typing import Iterable
 from matplotlib import pyplot as plt
 from json import JSONDecodeError, dump, load
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from itertools import groupby
 
 DATETIME_FORMAT = '%d.%m.%Y %H:%M:%S'
@@ -15,19 +14,20 @@ def open_csv(filename: str) -> list[str, ]:
     return spamreader
 
 
-def separate_income_and_expences(data: dict) -> list[list[str, ], list[str, ]]:
+def separate_income_and_expenses(data: dict) -> tuple[list, list]:
     """
-        Dict from json. Returns (expences, incomes)
+        Dict from json. Returns (expenses, incomes)
     """
-    expences = [x for x in data if float(x['Сумма операции'].replace(',', '.')) < 0]
+    expenses = [x for x in data if float(x['Сумма операции'].replace(',', '.')) < 0]
     incomes = [x for x in data if float(x['Сумма операции'].replace(',', '.')) > 0]
 
-    return expences, incomes
+    return expenses, incomes
 
 
 def change_category_name(data: list[dict, ], old_name: str, new_name: str) -> list[dict, ]:
     for row in data:
-        if row['Категория'] == old_name: row['Категория'] = new_name
+        if row['Категория'] == old_name:
+            row['Категория'] = new_name
     return data
 
 
@@ -45,7 +45,7 @@ def set_d10n_as_category_name(data: list[dict, ], description: str, category: st
     return data
 
 
-def get_all_categories(data: list[dict, ]) -> list[str, ]: return set([x['Категория'] for x in data])
+def get_all_categories(data: list[dict, ]) -> set[str, ]: return set([x['Категория'] for x in data])
 
 
 def sum_all_by_categories(categories: list[str, ], data: list[dict, ]) -> dict[str: float]:
@@ -53,7 +53,7 @@ def sum_all_by_categories(categories: list[str, ], data: list[dict, ]) -> dict[s
     for category in categories:
         filtered_data = [float(x['Сумма операции'].replace(',', '.')) for x in data if x['Категория'] == category]
         result[category] = abs(sum(filtered_data))
-    
+
     return result
 
 
@@ -91,12 +91,11 @@ def get_x_y_values(data: dict) -> dict[str: list[list, list]]:
 
         category[0].append(t9n['Дата операции'])
         category[1].append(total)
-    
+
     return plot_data
 
 
 def group_data_per_month(data: dict[str: list[list, list]]) -> dict[str: list[list, list]]:
-
     # Creates a list of days in each month in time period
     days_in_months, youngest, oldest = [], [], []
     for value in data.values():
@@ -110,9 +109,9 @@ def group_data_per_month(data: dict[str: list[list, list]]) -> dict[str: list[li
     month_periods = []
     for days in days_in_months:
         month_periods.append((
-            start, 
+            start,
             start + timedelta(days=days)
-            ))
+        ))
         start = start + timedelta(days=days)
 
     # Unites transactions per months by summing everything, that happens within a month timeframe
@@ -125,11 +124,12 @@ def group_data_per_month(data: dict[str: list[list, list]]) -> dict[str: list[li
                 if st < d <= e:
                     summed_pairs[0].append(d)
                     summed_pairs[1].append(su)
-            if not summed_pairs[0]: continue
+            if not summed_pairs[0]:
+                continue
             res_pairs[0].append(summed_pairs[0][-1])
             res_pairs[1].append(sum(summed_pairs[1]))
         result[k] = res_pairs
-    
+
     return result
 
 
@@ -179,8 +179,10 @@ def load_data(start_date: str = None, end_date: str = None):
                 result.append(transaction)
         return str_to_datetime(result)
 
-    elif not (start_date or end_date): return str_to_datetime(data)
-    else: raise Exception('You need to provide both dates')
+    elif not (start_date or end_date):
+        return str_to_datetime(data)
+    else:
+        raise Exception('You need to provide both dates')
 
 
 def str_to_datetime(data: dict):
@@ -189,14 +191,14 @@ def str_to_datetime(data: dict):
     return data
 
 
-def store_data(data: Iterable | None = None, file: str | None = None) -> list[dict, ]:
+def store_data(data: Iterable | None = None, file: str | None = None) -> list[dict,]:
     """
         data - object from open_csv()
     """
     assert (data and not file) or (file and not data), 'You need to provide exactly 1 source of data'
 
-    if file: 
-        data = open_csv(file) 
+    if file:
+        data = open_csv(file)
 
     columns = [x for x in data[0]]
     jsonable_data = []
@@ -214,5 +216,5 @@ def store_data(data: Iterable | None = None, file: str | None = None) -> list[di
     for operation in jsonable_data:
         operation['Дата операции'] = datetime.strftime(operation['Дата операции'], DATETIME_FORMAT)
     with open('db.json', 'w', encoding='utf-8') as f:
-        dump(jsonable_data, f, ensure_ascii=False,)
+        dump(jsonable_data, f, ensure_ascii=False, )
     return jsonable_data
