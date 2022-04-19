@@ -15,7 +15,7 @@ def open_csv(filename: str) -> list[str, ]:
     return spamreader
 
 
-def separate_income_and_expences(data: dict) -> tuple[list[str, ], list[str, ]]:
+def separate_income_and_expences(data: dict) -> list[list[str, ], list[str, ]]:
     """
         Dict from json. Returns (expences, incomes)
     """
@@ -29,6 +29,13 @@ def change_category_name(data: list[dict, ], old_name: str, new_name: str) -> li
     for row in data:
         if row['Категория'] == old_name: row['Категория'] = new_name
     return data
+
+
+def delete_category(data: dict, category: str) -> dict:
+    for cat in data.keys():
+        if category == cat:
+            del data[cat]
+            return data
 
 
 def set_d10n_as_category_name(data: list[dict, ], description: str, category: str) -> list[dict, ]:
@@ -74,7 +81,7 @@ def create_piechart_data(data: dict[str: float | int]) -> tuple[dict, float, lis
 
 def get_x_y_values(data: dict) -> dict[str: list[list, list]]:
     plot_data = {}
-    for t9n in data:
+    for t9n in data:  # t9n - transaction
         total = abs(float(t9n['Сумма операции'].replace(',', '.')))
         try:
             category = plot_data[t9n['Категория']]
@@ -93,23 +100,35 @@ def group_data_per_month(data: dict[str: list[list, list]]) -> dict[str: list[li
     # Creates a list of days in each month in time period
     days_in_months, youngest, oldest = [], [], []
     for value in data.values():
-        youngest.append(datetime.strptime(value[0][-1], DATETIME_FORMAT))
-        oldest.append(datetime.strptime(value[0][0], DATETIME_FORMAT))
+        youngest.append(value[0][-1])
+        oldest.append(value[0][0])
     start, end = min(oldest), max(youngest)
     for v, g in groupby(((start + timedelta(days=i)).month for i in range(1, (end - start).days + 1))):
         days_in_months.append(sum(1 for _ in g))
-
+    # TODO merge these two loops when optimizing
+    # Creates time periods [(start_of_month, end_of_month), ]
+    month_periods = []
+    for days in days_in_months:
+        month_periods.append((
+            start, 
+            start + timedelta(days=days)
+            ))
+        start = start + timedelta(days=days)
 
     # Unites transactions per months by summing everything, that happens within a month timeframe
-    result = {}
+    result = {}  # TODO test this (and better optimize somehow)
     for k, v in data.items():
-        shift = 0
-        summed_pairs = [[], []]
-        for days in days_in_months:
-            summed_pairs[0].append(v[shift + days])  # TODO list index out of range
-            summed_pairs[1].append(sum(v[shift:days]))
-            shift += days
-        result[k] = summed_pairs
+        res_pairs = [[], []]
+        for st, e in month_periods:  # st -start, e - end
+            summed_pairs = [[], []]
+            for d, su in zip(v[0], v[1]):  # d - date, su - sum
+                if st < d <= e:
+                    summed_pairs[0].append(d)
+                    summed_pairs[1].append(su)
+            if not summed_pairs[0]: continue
+            res_pairs[0].append(summed_pairs[0][-1])
+            res_pairs[1].append(sum(summed_pairs[1]))
+        result[k] = res_pairs
     
     return result
 
@@ -158,15 +177,16 @@ def load_data(start_date: str = None, end_date: str = None):
             operation_date = datetime.strptime(transaction['Дата операции'], DATETIME_FORMAT)
             if end_date >= operation_date >= start_date:
                 result.append(transaction)
-        return result
+        return str_to_datetime(result)
 
-    elif not (start_date or end_date):
-        for transaction in data:
-            transaction['Дата операции'] = datetime.strptime(transaction['Дата операции'], DATETIME_FORMAT)
-        return data
+    elif not (start_date or end_date): return str_to_datetime(data)
+    else: raise Exception('You need to provide both dates')
 
-    else:
-        raise Exception('You need to provide both dates')
+
+def str_to_datetime(data: dict):
+    for row in data:
+        row['Дата операции'] = datetime.strptime(row['Дата операции'], DATETIME_FORMAT)
+    return data
 
 
 def store_data(data: Iterable | None = None, file: str | None = None) -> list[dict, ]:
