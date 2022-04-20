@@ -163,9 +163,9 @@ def create_stem(data: dict[str: list[list, list]], dates) -> None:
     y = sum_all_categories(data)
     plt.plot(dates, y)
 
-    plt.grid()
-    plt.legend()
-    plt.show()
+    # plt.grid()
+    # plt.legend()
+    # plt.show()
 
 
 def load_data(start_date: str = None, end_date: str = None):
