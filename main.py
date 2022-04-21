@@ -83,23 +83,24 @@ def main(start_date, end_date):
                 pie_income[k] = abs(v)
 
     # Plots
-    fig, axs = plt.subplots(4)
 
     # Bar plots
     for c, v in categories.items():
-        axs[0].bar(x, v, label=c)
-    axs[0].plot(x, expenses)
-    axs[0].grid()
-    axs[0].legend()
+        plt.bar(x, v, label=c)
+    plt.plot(x, expenses)
+    plt.grid()
+    plt.legend()
+    plt.show()
 
-    axs[1].pie(pie_expenses.values(), labels=pie_expenses.keys())
-    axs[2].pie(pie_income.values(), labels=pie_income.keys())
+    plt.pie(pie_expenses.values(), labels=pie_expenses.keys())
+    plt.show()
+    plt.pie(pie_income.values(), labels=pie_income.keys())
+    plt.show()
 
-    axs[3].bar(x, income, label='Income')
-    axs[3].bar(x, profit, label='Profit')
-    axs[3].grid()
-    axs[3].legend()
-
+    plt.bar([d - timedelta(days=1) for d in x], income, label='Income')
+    plt.bar(x, profit, label='Profit')
+    plt.grid()
+    plt.legend()
     plt.show()
 
 
