@@ -1,3 +1,6 @@
+from matplotlib import pyplot as plt
+from itertools import groupby
+from datetime import timedelta
 from utils import *
 
 FILE_NAME = 'operations Tue Dec 12 00_00_00 MSK 2017-Wed Apr 13 10_04_32 MSK 2022.csv'
@@ -96,6 +99,7 @@ def expenses_plot(x, categories, expenses):
     for c, v in categories.items():
         plt.bar(x, v, label=c)
     plt.plot(x, expenses)
+    plt.gcf().autofmt_xdate()
     plt.grid()
     plt.legend()
     plt.show()
@@ -103,11 +107,13 @@ def expenses_plot(x, categories, expenses):
 
 def expenses_pie(pie_expenses):
     plt.pie(pie_expenses.values(), labels=pie_expenses.keys())
+    plt.title(f'Total {sum(pie_expenses.values())}')
     plt.show()
 
 
 def income_pie(pie_income):
     plt.pie(pie_income.values(), labels=pie_income.keys())
+    plt.title(f'Total {sum(pie_income.values())}')
     plt.show()
 
 
