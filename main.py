@@ -81,10 +81,18 @@ def main(start_date, end_date):
                 pie_expenses[k] = abs(v)
             else:
                 pie_income[k] = abs(v)
+    return {
+        'x': x,
+        'categories': categories,
+        'expenses': expenses,
+        'income': income,
+        'profit': profit,
+        'pie_expenses': pie_expenses,
+        'pie_income': pie_income
+    }
 
-    # Plots
 
-    # Bar plots
+def expenses_plot(x, categories, expenses):
     for c, v in categories.items():
         plt.bar(x, v, label=c)
     plt.plot(x, expenses)
@@ -92,11 +100,18 @@ def main(start_date, end_date):
     plt.legend()
     plt.show()
 
+
+def expenses_pie(pie_expenses):
     plt.pie(pie_expenses.values(), labels=pie_expenses.keys())
     plt.show()
+
+
+def income_pie(pie_income):
     plt.pie(pie_income.values(), labels=pie_income.keys())
     plt.show()
 
+
+def income_profit_plot(x, income, profit):
     plt.bar([d - timedelta(days=1) for d in x], income, label='Income')
     plt.bar(x, profit, label='Profit')
     plt.grid()

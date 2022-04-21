@@ -11,9 +11,3 @@ An application, that I use for managing my personal finances.
 + redo everything below LINE
 + add plots to dashboard
 + create a convinient way to use dashboard (browser? vscode interface?)
-
-### Later improvements
- 
- + itertools.groupby()
- + async?
- 
