@@ -120,6 +120,7 @@ def income_pie(pie_income):
 def income_profit_plot(x, income, profit):
     plt.bar([d - timedelta(days=1) for d in x], income, label='Income')
     plt.bar(x, profit, label='Profit')
+    plt.gcf().autofmt_xdate()
     plt.grid()
     plt.legend()
     plt.show()
