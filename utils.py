@@ -1,8 +1,6 @@
 from csv import reader
-from typing import Iterable
-from json import JSONDecodeError, dump, load
 from datetime import datetime
-
+from json import JSONDecodeError, dump, load
 
 DATETIME_FORMAT = '%d.%m.%Y %H:%M:%S'
 
@@ -80,14 +78,9 @@ def str_to_datetime(data: dict):
     return data
 
 
-def store_data(data: Iterable | None = None, file: str | None = None) -> list[dict, ]:
-    """
-        data - object from open_csv()
-    """
-    assert (data and not file) or (file and not data), 'You need to provide exactly 1 source of data'
-
-    if file:
-        data = open_csv(file)
+def update_db(file: str):
+    with open(file, encoding='windows-1251') as csvfile:
+        data = list(reader(csvfile, delimiter=';', quotechar='"'))
 
     columns = [x for x in data[0]]
     jsonable_data = []
@@ -106,4 +99,3 @@ def store_data(data: Iterable | None = None, file: str | None = None) -> list[di
         operation['Дата операции'] = datetime.strftime(operation['Дата операции'], DATETIME_FORMAT)
     with open('db.json', 'w', encoding='utf-8') as f:
         dump(jsonable_data, f, ensure_ascii=False, )
-    return jsonable_data

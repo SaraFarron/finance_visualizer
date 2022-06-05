@@ -1,6 +1,8 @@
 from matplotlib import pyplot as plt
 from itertools import groupby
 from datetime import timedelta
+from os import listdir
+
 from utils import *
 
 FILE_NAME = 'operations Tue Dec 12 00_00_00 MSK 2017-Wed Apr 13 10_04_32 MSK 2022.csv'
@@ -8,7 +10,26 @@ start = '01.01.2022 11:02:07'  # default 01.01.2017 00:00:00
 end = '01.04.2022 05:59:23'  # default 01.01.2023 00.00.00 or datetime.now() + timedelta(days=1)
 
 
-def main(start_date, end_date):
+def main(start_date: str | None = '01.01.2017', end_date: str | None = '01.01.2023'):
+
+    if 'db.json' not in listdir():
+        with open('db.json', 'w') as f:
+            pass  # Creates file
+        print('Creating db')
+        files = listdir()
+        csv_files = [x for x in files if x.endswith('.csv')]
+        match len(csv_files):
+            case 1:
+                file = csv_files[0]
+                update_db(file)
+            case 0:
+                print('No data found')
+                return
+            case _:
+                print('Several sources found, all will be added to db')
+                for f in csv_files:
+                    update_db(f)
+
     with open('db.json', 'r', encoding='utf-8') as f:
         data = []  # So that linter shuts up
         try:
@@ -107,13 +128,15 @@ def expenses_plot(x, categories, expenses):
 
 def expenses_pie(pie_expenses):
     plt.pie(pie_expenses.values(), labels=pie_expenses.keys())
-    plt.title(f'Total {sum(pie_expenses.values())}')
+    total = round(sum(pie_expenses.values()))
+    plt.title(f'Total {total}')
     plt.show()
 
 
 def income_pie(pie_income):
     plt.pie(pie_income.values(), labels=pie_income.keys())
-    plt.title(f'Total {sum(pie_income.values())}')
+    total = round(sum(pie_income.values()))
+    plt.title(f'Total {total}')
     plt.show()
 
 
