@@ -72,7 +72,7 @@ def load_data(start_date: str = None, end_date: str = None):
         raise Exception('You need to provide both dates')
 
 
-def str_to_datetime(data: dict):
+def str_to_datetime(data: dict | list):
     for row in data:
         row['Дата операции'] = datetime.strptime(row['Дата операции'], DATETIME_FORMAT)
     return data

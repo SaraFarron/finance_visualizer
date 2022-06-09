@@ -9,4 +9,3 @@ An application, that I use for managing my personal finances.
 ### Current tasks
 
 + plots improvements (fix expenses plot, make bigger size for all)
-+ db import
