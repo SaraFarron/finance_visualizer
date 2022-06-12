@@ -1,5 +1,4 @@
 from operator import add
-
 from matplotlib import pyplot as plt
 from itertools import groupby
 from datetime import timedelta
@@ -8,11 +7,14 @@ from os import listdir
 from utils import *
 
 FILE_NAME = 'operations Tue Dec 12 00_00_00 MSK 2017-Wed Apr 13 10_04_32 MSK 2022.csv'
-start = '01.01.2022 11:02:07'  # default 01.01.2017 00:00:00
+start = '01.01.2020 11:02:07'  # default 01.01.2017 00:00:00
 end = '01.04.2022 05:59:23'  # default 01.01.2023 00.00.00 or datetime.now() + timedelta(days=1)
 
 
-def main(start_date: str | None = '01.01.2017', end_date: str | None = '01.01.2023', limit: int | None = 100000):
+def main(start_date: str | None = '01.01.2017 00:00:00',
+         end_date: str | None = '01.01.2023 00:00:00',
+         limit: int | None = 100000,
+         display_cats: int | None = 8):
     if 'db.json' not in listdir():
         with open('db.json', 'w') as f:
             pass  # Creates file
@@ -40,6 +42,7 @@ def main(start_date: str | None = '01.01.2017', end_date: str | None = '01.01.20
 
     monthly_data = []
     categories = {}
+    pie_expenses, pie_income = {}, {}
 
     if start_date and end_date:
         start_date = datetime.strptime(start_date, DATETIME_FORMAT)
@@ -67,31 +70,53 @@ def main(start_date: str | None = '01.01.2017', end_date: str | None = '01.01.20
                 t9n['Сумма операции'] = float(t9n['Сумма операции'].replace(',', '.'))
                 t9n_sum = t9n['Сумма операции']
                 t9n_cat = t9n['Категория']
+                t9n_desc = t9n['Описание']
+
+                match t9n_desc:
+                    case 'Внесение наличных через банкомат Тинькофф':
+                        t9n['Описание'] = 'Геннадий С.'
+                    case 'VISA':
+                        t9n['Описание'] = 'Геннадий С.'
 
                 if any((
                         abs(t9n_sum) > limit,
-                        # t9n_cat.endswith('брокерского счета'),
-                        # t9n_cat.endswith('Брокер'),
-                        # t9n_cat == 'Перевод между счетами'
+                        t9n_desc == 'Пополнение брокерского счета',
+                        t9n_desc == 'Вывод с брокерского счета',
+                        t9n_desc == 'Вывод средств с брокерского счета',
+                        t9n_desc == 'Пополнение счета Тинькофф Брокер',
+                        t9n_desc == 'Вывод со счета Тинькофф Брокер',
+                        t9n_desc == 'Перевод между счетами'
                 )):
                     continue
 
-                if t9n_cat == 'Другое' and t9n_sum > 0:
+                if any([t9n_cat == 'Другое', t9n_cat == 'Финан. услуги']) and t9n_sum > 0:
                     t9n_cat = t9n['Описание']
+                if t9n_cat == 'Пополнение. ООО "ЯНДЕКС". Зарплата':
+                    t9n_cat = 'Яндекс.Зарплата'
 
                 # Creates time periods for every month
                 for month in monthly_data:
                     if month['start'] <= t9n_date <= month['end']:
                         try:
-                            month[t9n_cat] += t9n_sum
+                            month[t9n_cat] += abs(t9n_sum)
                         except KeyError:
                             month[t9n_cat] = 0
-                            month[t9n_cat] += t9n_sum
+                            month[t9n_cat] += abs(t9n_sum)
+
                         if t9n_sum > 0:
+                            if t9n_cat not in pie_income.keys():
+                                pie_income[t9n_cat] = 0
                             month['income'] += t9n_sum
+                            pie_income[t9n_cat] += t9n_sum
+
                         else:
-                            month['expenses'] += t9n_sum
+                            if t9n_cat not in pie_expenses.keys():
+                                pie_expenses[t9n_cat] = 0
+                            month['expenses'] += abs(t9n_sum)
+                            pie_expenses[t9n_cat] += abs(t9n_sum)
+
                 categories[t9n_cat] = []
+
         print('Operations serialized')
 
     else:
@@ -105,31 +130,30 @@ def main(start_date: str | None = '01.01.2017', end_date: str | None = '01.01.20
                 total = month[c]
             except KeyError:
                 total = 0
-            v.append(abs(round(total)))
-        month['profit'] = month['income'] - abs(month['expenses'])
+            v.append(round(total))
+        month['profit'] = month['income'] - month['expenses']
         x.append(month['start'])
         income.append(round(month['income']))
-        expenses.append(abs(round(month['expenses'])))
+        expenses.append(round(month['expenses']))
         profit.append(round(month['profit']))
 
-    pie_expenses, pie_income = {}, {}
-    for k, v in monthly_data[-1].items():
-        if k == 'income' or k == 'profit' or k == 'expenses':
-            continue
-        if type(v) is float:
-            if v < 0:
-                pie_expenses[k] = abs(v)
-            else:
-                pie_income[k] = abs(v)
     print('Profits and expenses separated')
 
-    if len(categories.keys()) > 8:  # This works wrong
-        categories = {k: v for k, v in sorted(categories.items(), key=lambda item: item[1], reverse=True)}
-        other = list(categories.items())[8:]
-        categories['Остальное'] = [0 for _ in range(len(x) + 1)]
+    if len(pie_expenses.keys()) > display_cats:
+        pie_expenses_grouped = group_cats(pie_expenses, display_cats)
+    if len(pie_income.keys()) > display_cats:
+        pie_income = group_cats(pie_income, display_cats)
+
+    if len(categories.keys()) > display_cats:
+        categories = {k: v for k, v in categories.items() if k in pie_expenses.keys()}
+        categories = {k: v for k, v in sorted(categories.items(), key=lambda item: sum(item[1]), reverse=True)}
+        other = list(categories.items())[display_cats:]
+        categories['Остальное'] = [0] * len(x)
         for k, v in other:
             categories['Остальное'] = list(map(add, categories['Остальное'], v))
             del categories[k]
+
+        pie_expenses = pie_expenses_grouped
 
     return {
         'x': x,
@@ -142,10 +166,9 @@ def main(start_date: str | None = '01.01.2017', end_date: str | None = '01.01.20
     }
 
 
-def expenses_plot(x, categories, expenses):
+def categorised_expenses_plot(x, categories):
     for c, v in categories.items():
         plt.plot(x, v, label=c)
-    plt.plot(x, expenses)
     plt.gcf().autofmt_xdate()
     plt.grid()
     plt.legend(bbox_to_anchor=(1.04, 0.5), loc="center left")
@@ -153,25 +176,27 @@ def expenses_plot(x, categories, expenses):
     plt.show()
 
 
-def expenses_pie(pie_expenses):
-    plt.pie(pie_expenses.values(), labels=pie_expenses.keys())
-    total = round(sum(pie_expenses.values()))
-    plt.title(f'Total {total}')
+def expenses_plot(x, expenses):
+    plt.gcf().autofmt_xdate()
+    plt.grid()
+    plt.plot(x, expenses)
     plt.gcf().set_size_inches(15, 10)
     plt.show()
 
 
-def income_pie(pie_income):
-    plt.pie(pie_income.values(), labels=pie_income.keys())
-    total = round(sum(pie_income.values()))
-    plt.title(f'Total {total}')
+def pie(pie_data):
+    total = round(sum(pie_data.values()))
+    pie_data = {f"{k}\n{round(v / total * 100)}%": v for k, v in pie_data.items()}
+    plt.pie(pie_data.values(), labels=pie_data.keys())
+    plt.title(f'Всего {total}')
     plt.gcf().set_size_inches(15, 10)
     plt.show()
 
 
 def income_profit_plot(x, income, profit):
-    plt.bar([d - timedelta(days=3) for d in x], income, label='Income')
-    plt.bar(x, profit, label='Profit')
+    width = 10
+    plt.bar([d - timedelta(days=int(len(x))) for d in x], income, label='Выручка', width=width)
+    plt.bar(x, profit, label='Прибыль', width=width)
     plt.gcf().autofmt_xdate()
     plt.grid()
     plt.legend()
@@ -180,4 +205,4 @@ def income_profit_plot(x, income, profit):
 
 
 if __name__ == '__main__':
-    main(start, end)
+    main()

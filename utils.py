@@ -5,45 +5,6 @@ from json import JSONDecodeError, dump, load
 DATETIME_FORMAT = '%d.%m.%Y %H:%M:%S'
 
 
-def open_csv(filename: str) -> list[str, ]:
-    with open(filename) as csvfile:
-        spamreader = list(reader(csvfile, delimiter=';', quotechar='"'))
-    return spamreader
-
-
-def change_category_name(data: list[dict, ], old_name: str, new_name: str) -> list[dict, ]:
-    for row in data:
-        if row['Категория'] == old_name:
-            row['Категория'] = new_name
-    return data
-
-
-def delete_category(data: dict, category: str) -> dict:
-    for cat in data.keys():
-        if category == cat:
-            del data[cat]
-            return data
-
-
-def set_d10n_as_category_name(data: list[dict, ], description: str, category: str) -> list[dict, ]:
-    for row in data:
-        if row['Категория'] == category and row['Описание'] == description:
-            row['Описание'] = description
-    return data
-
-
-def unite_categories(categories: dict[str: [str, ]], data: dict[str: float]) -> dict[str: float]:
-    """
-        categories key is new category name, value is a list of two categories to unite
-    """
-    value = 0
-    for cat in list(categories.values())[0]:
-        value += data[cat]
-        del data[cat]
-    data[list(categories.keys())[0]] = value
-    return data
-
-
 def load_data(start_date: str = None, end_date: str = None):
     """
         Datetime format is %d.%m.%Y %H:%M:%S
@@ -99,3 +60,18 @@ def update_db(file: str):
         operation['Дата операции'] = datetime.strftime(operation['Дата операции'], DATETIME_FORMAT)
     with open('db.json', 'w', encoding='utf-8') as f:
         dump(jsonable_data, f, ensure_ascii=False, )
+
+
+def group_cats(data_source: dict, n: int):
+    grouped_data = {k: v for k, v in sorted(data_source.items(), key=lambda item: item[1], reverse=True)}
+    other = list(grouped_data.items())[n:]
+    grouped_data['Остальное'] = 0
+    for k, v in other:
+        grouped_data['Остальное'] += v
+        del grouped_data[k]
+    return grouped_data
+
+
+def labels_with_values(labels, values):
+    absolute = int(round(values / 100. * sum(labels)))
+    return "{:.1f}%\n({:d} g)".format(values, absolute)
